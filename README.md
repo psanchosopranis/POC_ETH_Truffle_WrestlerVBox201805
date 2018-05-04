@@ -2,9 +2,6 @@
 Bitácora ampliada con notas propias sobre el desarrollo del tutorial Ethereum Development Walkthrough (Part 2: Truffle, Ganache, Geth and Mist) (https://hackernoon.com/ethereum-development-walkthrough-part-2-truffle-ganache-geth-and-mist-8d6320e12269)
 [Autor: https://hackernoon.com/@dev_zl](https://hackernoon.com/@dev_zl)
 
-# POC_ETH_Truffle_PetStoreVBox201805
-Bitácora ampliada con notas propias sobre el desarrollo del tutorial [Ethereum Pet Shop](http://truffleframework.com/tutorials/pet-shop)
-
 Contiene la bitácora de progreso de ejecución del tutorial, y de hecho contiene partes literales del tutorial, ampliado con notas y detalles propias y pensado para servir de posible guía para poder reproducir el tutorial cuando sea preciso pero también por si puede ser de utilidad como guía ampliada a terceros a los que pudiera ser de utilidad.
 
 ## Bitácora y notas
