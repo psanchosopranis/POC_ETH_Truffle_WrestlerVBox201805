@@ -12,6 +12,7 @@ Contiene la bitácora de progreso de ejecución del tutorial, y de hecho contien
 Debian GNU/Linux 9 \n \l
 # uname -a
 Linux vbxdeb8 4.9.0-5-amd64 #1 SMP Debian 4.9.65-3+deb9u2 (2018-01-04) x86_64 GNU/Linux
+```
 
 
 
