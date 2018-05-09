@@ -710,3 +710,14 @@ module.exports = {
   }
 };
 ```
+
+El `workspace` de trabajo de Truffle quedará así tras los cambios realizados:
+
+![truffle workspace status](images/IMG01.png "truffle workspace status")
+
+
+## Probando el código
+
+### 1) Arrancar ganache en un terminal separado (o como proceso de fondo)
+
+```
