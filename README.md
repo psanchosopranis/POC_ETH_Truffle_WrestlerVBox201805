@@ -474,3 +474,239 @@ scripts/ganache-cli-restart-from-explicit-accounts.sh
 ^C+ set +x
 
 ```
+
+### Inicializando el proyecto `Truffle`
+
+>Nota: Se requiere realizar la inicialización sobre un directorio vacío
+
+
+```
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ mkdir trufflewksp
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ cd trufflewksp/
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ truffle init
+Downloading...
+Unpacking...
+Setting up...
+Unbox successful. Sweet!
+
+Commands:
+
+  Compile:        truffle compile
+  Migrate:        truffle migrate
+  Test contracts: truffle test
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ tree
+.
+├── contracts
+│   └── Migrations.sol
+├── migrations
+│   └── 1_initial_migration.js
+├── test
+├── truffle-config.js
+└── truffle.js
+
+3 directories, 4 files
+```
+
+### Incorporamos el [código fuente en lenguaje `Solidity` del contrato de ejemplo](https://raw.githubusercontent.com/devzl/ethereum-walkthrough-1/master/Wrestling.sol) en la carpeta `contracts`
+
+```
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ cd contracts/
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp/contracts$ wget --verbose https://raw.githubusercontent.com/devzl/ethereum-walkthrough-1/master/Wrestling.sol
+--2018-05-09 16:40:21--  https://raw.githubusercontent.com/devzl/ethereum-walkthrough-1/master/Wrestling.sol
+Resolviendo raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.0.133, 151.101.64.133, 151.101.128.133, ...
+Conectando con raw.githubusercontent.com (raw.githubusercontent.com)[151.101.0.133]:443... conectado.
+Petición HTTP enviada, esperando respuesta... 200 OK
+Longitud: 2704 (2,6K) [text/plain]
+Grabando a: “Wrestling.sol”
+
+Wrestling.sol                                        100%[=====================================================================================================================>]   2,64K  --.-KB/s    in 0s      
+
+2018-05-09 16:40:21 (40,5 MB/s) - “Wrestling.sol” guardado [2704/2704]
+
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp/contracts$ tree
+.
+├── Migrations.sol
+└── Wrestling.sol
+
+0 directories, 2 files
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp/contracts$ cd ..
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ cd ..
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ tree
+.
+├── LICENSE
+├── README.md
+├── scripts
+│   ├── ganache-cli-restart-from-explicit-accounts.sh
+│   └── ganache-cli-restart-from-mnemonic.sh
+└── trufflewksp
+    ├── contracts
+    │   ├── Migrations.sol
+    │   └── Wrestling.sol
+    ├── migrations
+    │   └── 1_initial_migration.js
+    ├── test
+    ├── truffle-config.js
+    └── truffle.js
+
+5 directories, 9 files
+
+
+```
+
+### Fuente descargado `Wrestling.sol`
+
+```sol
+pragma solidity ^0.4.18;
+
+    /**
+    * Example script for the Ethereum development walkthrough
+    */
+
+contract Wrestling {
+    /**
+    * Our wrestlers
+    */
+	address public wrestler1;
+	address public wrestler2;
+
+	bool public wrestler1Played;
+	bool public wrestler2Played;
+
+	uint private wrestler1Deposit;
+	uint private wrestler2Deposit;
+
+	bool public gameFinished; 
+    address public theWinner;
+    uint gains;
+
+    /**
+    * The logs that will be emitted in every step of the contract's life cycle
+    */
+	event WrestlingStartsEvent(address wrestler1, address wrestler2);
+	event EndOfRoundEvent(uint wrestler1Deposit, uint wrestler2Deposit);
+	event EndOfWrestlingEvent(address winner, uint gains);
+
+    /**
+    * The contract constructor
+    */
+	function Wrestling() public {
+		wrestler1 = msg.sender;
+	}
+
+    /**
+    * A second wrestler can register as an opponent
+    */
+	function registerAsAnOpponent() public {
+        require(wrestler2 == address(0));
+
+        wrestler2 = msg.sender;
+
+        WrestlingStartsEvent(wrestler1, wrestler2);
+    }
+
+    /**
+    * Every round a player can put a sum of ether, if one of the player put in twice or 
+    * more the money (in total) than the other did, the first wins 
+    */
+    function wrestle() public payable {
+    	require(!gameFinished && (msg.sender == wrestler1 || msg.sender == wrestler2));
+
+    	if(msg.sender == wrestler1) {
+    		require(wrestler1Played == false);
+    		wrestler1Played = true;
+    		wrestler1Deposit = wrestler1Deposit + msg.value;
+    	} else { 
+    		require(wrestler2Played == false);
+    		wrestler2Played = true;
+    		wrestler2Deposit = wrestler2Deposit + msg.value;
+    	}
+    	if(wrestler1Played && wrestler2Played) {
+    		if(wrestler1Deposit >= wrestler2Deposit * 2) {
+    			endOfGame(wrestler1);
+    		} else if (wrestler2Deposit >= wrestler1Deposit * 2) {
+    			endOfGame(wrestler2);
+    		} else {
+                endOfRound();
+    		}
+    	}
+    }
+
+    function endOfRound() internal {
+    	wrestler1Played = false;
+    	wrestler2Played = false;
+
+    	EndOfRoundEvent(wrestler1Deposit, wrestler2Deposit);
+    }
+
+    function endOfGame(address winner) internal {
+        gameFinished = true;
+        theWinner = winner;
+
+        gains = wrestler1Deposit + wrestler2Deposit;
+        EndOfWrestlingEvent(winner, gains);
+    }
+
+    /**
+    * The withdraw function, following the withdraw pattern shown and explained here: 
+    * http://solidity.readthedocs.io/en/develop/common-patterns.html#withdrawal-from-contracts
+    */
+    function withdraw() public {
+        require(gameFinished && theWinner == msg.sender);
+
+        uint amount = gains;
+
+        gains = 0;
+        msg.sender.transfer(amount);
+    }
+}
+```
+### Creamos en la carpeta `migrations` el archivo `2_deploy_contracts.js` con instrucciones para la tarea de `Migrate` del contrato 'Wrestling.sol`
+
+```js
+const Wrestling = artifacts.require("./Wrestling.sol")
+
+module.exports = function (deployer) {
+    deployer.deploy(Wrestling);
+};
+```
+
+### Ajustamos el archivo de configuración de Truffle: `truffle.js` 
+
+* para que apunte a una "red de desarrollo" que en nuestro caso está constituida por `Ganache` (cuyo `RPC listener` estará levantado en este tutorial en `localhost` escuchando en el puerto `8545`.
+  >`Listening on localhost:8545`)
+* para que el despliegue se haga utilizando la `cuenta[0]` de `Ganache` convierténdose en el `owner`de dicho martContract` (*Nota: si no se indica expresamente se toma dicha primera cuenta como cuenta por defecto*)
+  >
+  >`Available Accounts`  
+  >`==================`   
+  >`(0) 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba`     
+  > `... ... ... ...`   
+  >
+  > `Private Keys`   
+  > `==================`   
+  > `(0) b7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae`  
+  > `... ... ... ...`  
+
+#### `truffle.js` 
+
+```
+module.exports = {
+  // See <http://truffleframework.com/docs/advanced/configuration>
+  // to customize your Truffle configuration!
+  networks: {
+    // nombre de alias de la red 'ficticia' constituida por el nodo Ganache
+    localganache: {
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "*", // Match any network id
+      // optional config values:
+      // gas (Gas limit used for deploys. Default is 4712388)
+      // gasPrice (Gas price used for deploys. Default is 100000000000 (100 Shannon).)
+      // from (From address used during migrations. Defaults to the first available account provided by your Ethereum client.) 
+      from: "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba" // PRIMERA CUENTA DE GANACHE SI NO SE INDICA ES LA DE POR DEFECTO
+      // provider - web3 provider instance Truffle should use to talk to the Ethereum network.
+      //          - function that returns a web3 provider instance (see below.)
+      //          - if specified, host and port are ignored.
+    }
+  }
+};
+```
