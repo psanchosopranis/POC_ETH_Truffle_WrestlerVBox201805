@@ -272,4 +272,205 @@ Solidity v0.4.23 (solc-js)
 
 ```
 
-### We also will
+### Instalando `Ganache-cli`como root:
+
+```sh
+root@vbxdeb8:~/Descargas# npm install -g ganache-cli
+``` 
+
+### Primera ejecución de `ganache-cli` 
+
+```sh
+devel@vbxdeb8:~$ ganache-cli
+Ganache CLI v6.1.0 (ganache-core: 2.1.0)
+
+Available Accounts
+==================
+(0) 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+(1) 0xc4b0e67aed7da3ecfe222478512c4ce793d361d7
+(2) 0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5
+(3) 0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e
+(4) 0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7
+(5) 0x1e1d87af5421c977a75604651ee663457c34c12b
+(6) 0x838eab87a84dfc10f904c5cf0e0fd41edffae30f
+(7) 0x4473beba2fe323da4cc5c75ae813229e3757fc04
+(8) 0x2d84ea179555a5db90fc20d694844216f4f5a744
+(9) 0x1264e056538814a3908a12025aafb39976cc7c38
+
+Private Keys
+==================
+(0) b7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae
+(1) e6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93
+(2) 31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5
+(3) da383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9
+(4) 2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1
+(5) 1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be
+(6) c97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b
+(7) 3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92
+(8) 5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf
+(9) feccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c
+
+HD Wallet
+==================
+Mnemonic:      grunt turn amount mule siren favorite tenant bronze parent fit grit conduct
+Base HD Path:  m/44'/60'/0'/0/{account_index}
+
+Listening on localhost:8545
+
+^C (CTRL+C)
+```
+### Asegurar reinicio `controlado` de `ganache-cli`
+
+Interesa conseguir un reinicio `controlado` de `ganache-cli` con las mismas cuentas (claves privadas, saldos y direcciones) que en este primer arranque para poder apagar la máquina virtual y retomar el tutorial en cualquier punto disponiendo de  las mismas cuentas (claves privadas, saldos y direcciones) que las generadas en el primer arranque arriba descrito. Naturalmente los saldos en Ether se reiniciarán al saldo inicial.
+
+Para ello se han dispuesto dos scripts que consiguen el mismo objetivo pero sirven para mostrar diferentes formas de arrancar `ganache-cli`
+
+#### 1) `scripts/ganache-cli-restart-from-mnemonic.sh`
+
+```sh
+#!/bin/bash
+set -x
+ganache-cli \
+    --deterministic \
+    --mnemonic "grunt turn amount mule siren favorite tenant bronze parent fit grit conduct" \
+    --port 8545 \
+    --hostname localhost \
+    --gasPrice 20000000000 \
+    --gasLimit 90000 \
+    --defaultBalanceEther 200
+set +x
+```
+
+Prueba de ejecución:
+
+```
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ scripts/ganache-cli-restart-from-mnemonic.sh &
+[1] 2591
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ + ganache-cli --deterministic --mnemonic 'grunt turn amount mule siren favorite tenant bronze parent fit grit conduct' --port 8545 --hostname localhost --gasPrice 20000000000 --gasLimit 90000 --defaultBalanceEther 200
+Ganache CLI v6.1.0 (ganache-core: 2.1.0)
+
+Available Accounts
+==================
+(0) 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+(1) 0xc4b0e67aed7da3ecfe222478512c4ce793d361d7
+(2) 0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5
+(3) 0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e
+(4) 0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7
+(5) 0x1e1d87af5421c977a75604651ee663457c34c12b
+(6) 0x838eab87a84dfc10f904c5cf0e0fd41edffae30f
+(7) 0x4473beba2fe323da4cc5c75ae813229e3757fc04
+(8) 0x2d84ea179555a5db90fc20d694844216f4f5a744
+(9) 0x1264e056538814a3908a12025aafb39976cc7c38
+
+Private Keys
+==================
+(0) b7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae
+(1) e6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93
+(2) 31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5
+(3) da383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9
+(4) 2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1
+(5) 1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be
+(6) c97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b
+(7) 3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92
+(8) 5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf
+(9) feccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c
+
+HD Wallet
+==================
+Mnemonic:      grunt turn amount mule siren favorite tenant bronze parent fit grit conduct
+Base HD Path:  m/44'/60'/0'/0/{account_index}
+
+Gas Price
+==================
+20000000000
+
+Gas Limit
+==================
+90000
+
+Listening on localhost:8545
+
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ lsof -i :8545
+COMMAND  PID  USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+node    2592 devel   12u  IPv4  36296      0t0  TCP localhost:8545 (LISTEN)
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ fg 
+scripts/ganache-cli-restart-from-mnemonic.sh
+^C+ set +x
+```
+
+#### 2) `scripts/ganache-cli-restart-from-explicit-accounts.sh`
+
+```sh
+#!/bin/bash
+set -x
+ganache-cli \
+    --account="0xb7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae,200" \
+    --account="0xe6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93,200" \
+    --account="0x31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5,200" \
+    --account="0xda383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9,200" \
+    --account="0x2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1,200" \
+    --account="0x1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be,200" \
+    --account="0xc97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b,200" \
+    --account="0x3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92,200" \
+    --account="0x5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf,200" \
+    --account="0xfeccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c,200" \
+    --secure -u 0 -u 1 -u 2 -u 3 -u 4 -u 5 -u 6 -u 7 -u 8 -u 9 \
+    --port 8545 \
+    --hostname localhost \
+    --gasPrice 20000000000 \
+    --gasLimit 90000
+set +x
+```
+
+Prueba de Ejecución:
+
+```
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ scripts/ganache-cli-restart-from-explicit-accounts.sh &
+[1] 2754
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ + ganache-cli --account=0xb7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae,200 --account=0xe6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93,200 --account=0x31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5,200 --account=0xda383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9,200 --account=0x2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1,200 --account=0x1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be,200 --account=0xc97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b,200 --account=0x3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92,200 --account=0x5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf,200 --account=0xfeccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c,200 --secure -u 0 -u 1 -u 2 -u 3 -u 4 -u 5 -u 6 -u 7 -u 8 -u 9 --port 8545 --hostname localhost --gasPrice 20000000000 --gasLimit 90000
+Ganache CLI v6.1.0 (ganache-core: 2.1.0)
+
+Available Accounts
+==================
+(0) 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+(1) 0xc4b0e67aed7da3ecfe222478512c4ce793d361d7
+(2) 0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5
+(3) 0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e
+(4) 0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7
+(5) 0x1e1d87af5421c977a75604651ee663457c34c12b
+(6) 0x838eab87a84dfc10f904c5cf0e0fd41edffae30f
+(7) 0x4473beba2fe323da4cc5c75ae813229e3757fc04
+(8) 0x2d84ea179555a5db90fc20d694844216f4f5a744
+(9) 0x1264e056538814a3908a12025aafb39976cc7c38
+
+Private Keys
+==================
+(0) b7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae
+(1) e6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93
+(2) 31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5
+(3) da383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9
+(4) 2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1
+(5) 1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be
+(6) c97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b
+(7) 3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92
+(8) 5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf
+(9) feccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c
+
+Gas Price
+==================
+20000000000
+
+Gas Limit
+==================
+90000
+
+Listening on localhost:8545
+
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ lsof -i :8545
+COMMAND  PID  USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+node    2755 devel   12u  IPv4  39575      0t0  TCP localhost:8545 (LISTEN)
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ fg
+scripts/ganache-cli-restart-from-explicit-accounts.sh
+^C+ set +x
+
+```
