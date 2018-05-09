@@ -7129,6 +7129,9 @@ devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$
 
 ```
 
+**Se ha rechazado la transacción por sobrepasar el `gasLimit`: `Exceeds block gas limit`**
+
+
 #### En la consola de `Ganache-cli` puede verse:
 
 ```
@@ -7297,8 +7300,1087 @@ Transfer-Encoding: chunked
 > `gasPrice`: Gas price used for deploys. Default is `100000000000` (100 Shannon).
 
 
-* Observamos que:
+**Observamos que:**
   1. En la transacción se está usando `"gas": "0x6691b7"` --> `6721975` en lugar de `4712388` 
   2. En la transacción se utiliza `"gasPrice": "0x174876e800"` --> `100000000000` que sí coincide con el valor reseñado en la documentación.
   3. Por otra parte en el script de arranque de `ganache-cli` se ha usado `--gasPrice 20000000000` y `--gasLimit 90000`. El `--gasLimit 90000` es manifiestamente escaso ==> por tanto *vamos a hacer una nueva prueba modificando este valor en los scripts de arranque de ganache-cli*
  
+### 4) Utilizar truffle para realizar el `Migrate` (Despliegue)  de ambos contratos `Migrations.sol` y `Wrestling.sol` SEGUNDO INTENTO
+
+#### Ajuste de parámetros 
+
+Para evitar el problema de rechazo de la transacción por sobrepasar el `gasLimit`: `Exceeds block gas limit` vamos a realizar los siguientes ajustes en lo scripts de arranque de `ganache-cli`:
+
+* ganache-cli-restart-from-mnemonic.sh
+
+```sh
+#!/bin/bash
+set -x
+ganache-cli \
+    --deterministic \
+    --mnemonic "grunt turn amount mule siren favorite tenant bronze parent fit grit conduct" \
+    --port 8545 \
+    --hostname localhost \
+    --networkId 4567890 \
+    --gasPrice 100000000000 \
+    --gasLimit 6721975 \
+    --defaultBalanceEther 200 \
+    --debug \
+    --verbose
+set +x
+```
+
+* ganache-cli-restart-from-explicit-accounts.sh
+
+```sh
+#!/bin/bash
+set -x
+ganache-cli \
+    --account="0xb7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae,200" \
+    --account="0xe6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93,200" \
+    --account="0x31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5,200" \
+    --account="0xda383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9,200" \
+    --account="0x2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1,200" \
+    --account="0x1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be,200" \
+    --account="0xc97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b,200" \
+    --account="0x3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92,200" \
+    --account="0x5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf,200" \
+    --account="0xfeccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c,200" \
+    --secure -u 0 -u 1 -u 2 -u 3 -u 4 -u 5 -u 6 -u 7 -u 8 -u 9 \
+    --port 8545 \
+    --hostname localhost \
+    --networkId 4567890 \
+    --gasPrice 100000000000 \
+    --gasLimit 6721975 \
+    --debug \
+    --verbose
+set +x
+```
+
+>Nota(1): adviértanse los nuevos valores de `--gasPrice 100000000000` y `--gasLimit 6721975`
+
+>Nota(2): adviértanse que aprovechamos la ocasión para establecer un **Network ID** a `--networkId 4567890` que es un valor *arbitrario* (si no se especifica su valor por defecto es el `current time`). Asimismo hemos hecho la salida de `ganache-cli` más detallada `--verbose`
+
+Para hacer el ejercicio más cercano a un entorno real vamos a ajstar igualmente el archivo de configuración de `Truffle` para que utilce *explícitamente* el valor de `NetworkID` con el que arrancamos `ganache-cli`:
+
+* truffle.js
+
+```js
+module.exports = {
+  // See <http://truffleframework.com/docs/advanced/configuration>
+  // to customize your Truffle configuration!
+  networks: {
+    // nombre de alias de la red 'ficticia' constituida por el nodo Ganache
+    localganache: {
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "4567890", 
+      // optional config values:
+      // gas (Gas limit used for deploys. Default is 4712388)
+      // gasPrice (Gas price used for deploys. Default is 100000000000 (100 Shannon).)
+      // from (From address used during migrations. Defaults to the first available account provided by your Ethereum client.) 
+      from: "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba" // PRIMERA CUENTA DE GANACHE SI NO SE INDICA ES LA DE POR DEFECTO
+      // provider - web3 provider instance Truffle should use to talk to the Ethereum network.
+      //          - function that returns a web3 provider instance (see below.)
+      //          - if specified, host and port are ignored.
+    }
+  }
+};
+```
+#### Arranque de `ganache-cli` con los nuevos parámetros:
+
+```sh
+devel@vbxdeb8:~$ cd ~/POC/POC_ETH_Truffle_WrestlerVBox201805/scripts
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/scripts$ ./ganache-cli-restart-from-mnemonic.sh 
++ ganache-cli --deterministic --mnemonic 'grunt turn amount mule siren favorite tenant bronze parent fit grit conduct' --port 8545 --hostname localhost --networkId 4567890 --gasPrice 100000000000 --gasLimit 6721975 --defaultBalanceEther 200 --debug --verbose
+Ganache CLI v6.1.0 (ganache-core: 2.1.0)
+
+Available Accounts
+==================
+(0) 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+(1) 0xc4b0e67aed7da3ecfe222478512c4ce793d361d7
+(2) 0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5
+(3) 0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e
+(4) 0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7
+(5) 0x1e1d87af5421c977a75604651ee663457c34c12b
+(6) 0x838eab87a84dfc10f904c5cf0e0fd41edffae30f
+(7) 0x4473beba2fe323da4cc5c75ae813229e3757fc04
+(8) 0x2d84ea179555a5db90fc20d694844216f4f5a744
+(9) 0x1264e056538814a3908a12025aafb39976cc7c38
+
+Private Keys
+==================
+(0) b7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae
+(1) e6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93
+(2) 31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5
+(3) da383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9
+(4) 2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1
+(5) 1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be
+(6) c97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b
+(7) 3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92
+(8) 5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf
+(9) feccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c
+
+HD Wallet
+==================
+Mnemonic:      grunt turn amount mule siren favorite tenant bronze parent fit grit conduct
+Base HD Path:  m/44'/60'/0'/0/{account_index}
+
+Gas Price
+==================
+100000000000
+
+Gas Limit
+==================
+6721975
+
+Listening on localhost:8545
+
+```
+
+#### Probamos a repetir la tarea de `migrate`
+
+```sh
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ cd ~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ truffle migrate --network localganache
+Using network 'localganache'.
+
+Running migration: 1_initial_migration.js
+  Deploying Migrations...
+  ... 0x455a68768f78532a1f9b071c4c1f420a8c4a7585930d7f3bad2b4d786fb402c5
+  Migrations: 0x8ed23120276e8941dae453c414b45066630f8150
+Saving successful migration to network...
+  ... 0xd53b96b3ae73db7916b977dbd7a37e6f43b184baf4c590594955e88203ad4947
+Saving artifacts...
+Running migration: 2_deploy_contracts.js
+  Deploying Wrestling...
+  ... 0x24b6c82d7a0992ccd5d95a3e7c2f3d9140bb33eae07aac9a2b70c93eb2cabb2d
+  Wrestling: 0x62dae9935302797d7666b63c1b6b3009c6fe7a23
+Saving successful migration to network...
+  ... 0x0cf8e04e91a0f8edb1be8d4fd6a3495dfb5142896614653d6fa40f890ed702cc
+Saving artifacts...
+```
+
+**!!! EXITO !!!**
+
+#### En la consola de `ganache-cli` puede verse
+
+```
+... ... ...
+Listening on localhost:8545
+eth_accounts
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 1,
+   >   "method": "eth_accounts",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 1,
+ <     "jsonrpc": "2.0",
+ <     "result": [
+ <       "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+ <       "0xc4b0e67aed7da3ecfe222478512c4ce793d361d7",
+ <       "0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5",
+ <       "0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e",
+ <       "0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7",
+ <       "0x1e1d87af5421c977a75604651ee663457c34c12b",
+ <       "0x838eab87a84dfc10f904c5cf0e0fd41edffae30f",
+ <       "0x4473beba2fe323da4cc5c75ae813229e3757fc04",
+ <       "0x2d84ea179555a5db90fc20d694844216f4f5a744",
+ <       "0x1264e056538814a3908a12025aafb39976cc7c38"
+ <     ]
+ <   }
+net_version
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 2,
+   >   "method": "net_version",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 2,
+ <     "jsonrpc": "2.0",
+ <     "result": "4567890"
+ <   }
+net_version
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 3,
+   >   "method": "net_version",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 3,
+ <     "jsonrpc": "2.0",
+ <     "result": "4567890"
+ <   }
+eth_sendTransaction
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 4,
+   >   "method": "eth_sendTransaction",
+   >   "params": [
+   >     {
+   >       "from": "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+   >       "gas": "0x6691b7",
+   >       "gasPrice": "0x174876e800",
+   >       "data": "0x608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055506102f8806100606000396000f300608060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680630900f01014610067578063445df0ac146100aa5780638da5cb5b146100d5578063fdacd5761461012c575b600080fd5b34801561007357600080fd5b506100a8600480360381019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610159565b005b3480156100b657600080fd5b506100bf610241565b6040518082815260200191505060405180910390f35b3480156100e157600080fd5b506100ea610247565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561013857600080fd5b506101576004803603810190808035906020019092919050505061026c565b005b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16141561023d578190508073ffffffffffffffffffffffffffffffffffffffff1663fdacd5766001546040518263ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040180828152602001915050600060405180830381600087803b15801561022457600080fd5b505af1158015610238573d6000803e3d6000fd5b505050505b5050565b60015481565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614156102c957806001819055505b505600a165627a7a72305820eb0e08476ecb80fde19b68ac8d722f581912cd284590773c7cbf18a33171af4e0029"
+   >     }
+   >   ]
+   > }
+PUSH1
+PUSH1
+MSTORE 0x80 0x40
+CALLVALUE
+DUP1
+ISZERO 0x0
+PUSH2
+JUMPI 0x1 0x10
+JUMPDEST
+POP 0x0
+CALLER
+PUSH1
+DUP1
+PUSH2
+EXP 0x0 0x100
+DUP2
+SLOAD 0x0
+DUP2
+PUSH20
+MUL 0x1 0xffffffffffffffffffffffffffffffffffffffff
+NOT 0xffffffffffffffffffffffffffffffffffffffff
+AND 0x0 0xffffffffffffffffffffffff0000000000000000000000000000000000000000
+SWAP1
+DUP4
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+MUL 0x1 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+OR 0x0 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+SWAP1
+SSTORE 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0x0
+POP 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+PUSH2
+DUP1
+PUSH2
+PUSH1
+CODECOPY 0x2f8 0x60 0x0
+PUSH1
+RETURN 0x2f8 0x0
+
+  Transaction: 0x455a68768f78532a1f9b071c4c1f420a8c4a7585930d7f3bad2b4d786fb402c5
+  Contract created: 0x8ed23120276e8941dae453c414b45066630f8150
+  Gas usage: 277462
+  Block Number: 1
+  Block Time: Wed May 09 2018 20:43:28 GMT+0200 (CEST)
+
+ <   {
+ <     "id": 4,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x455a68768f78532a1f9b071c4c1f420a8c4a7585930d7f3bad2b4d786fb402c5"
+ <   }
+eth_newBlockFilter
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 5,
+   >   "method": "eth_newBlockFilter",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 5,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x01"
+ <   }
+eth_getFilterChanges
+   > [
+   >   {
+   >     "jsonrpc": "2.0",
+   >     "id": 6,
+   >     "method": "eth_getFilterChanges",
+   >     "params": [
+   >       "0x01"
+   >     ]
+   >   }
+   > ]
+ <   [
+ <     {
+ <       "id": 6,
+ <       "jsonrpc": "2.0",
+ <       "result": [
+ <         "0xac0dff6f625661628b67b0746814d21930fdb57df794fb1503bf2c07f639ffb5"
+ <       ]
+ <     }
+ <   ]
+eth_getTransactionReceipt
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 7,
+   >   "method": "eth_getTransactionReceipt",
+   >   "params": [
+   >     "0x455a68768f78532a1f9b071c4c1f420a8c4a7585930d7f3bad2b4d786fb402c5"
+   >   ]
+   > }
+ <   {
+ <     "id": 7,
+ <     "jsonrpc": "2.0",
+ <     "result": {
+ <       "transactionHash": "0x455a68768f78532a1f9b071c4c1f420a8c4a7585930d7f3bad2b4d786fb402c5",
+ <       "transactionIndex": "0x00",
+ <       "blockHash": "0x6a961d87bff7c347d934f34215e50213270ec0ff677b405c453361eb514f4c93",
+ <       "blockNumber": "0x01",
+ <       "gasUsed": "0x043bd6",
+ <       "cumulativeGasUsed": "0x043bd6",
+ <       "contractAddress": "0x8ed23120276e8941dae453c414b45066630f8150",
+ <       "logs": [],
+ <       "status": "0x01",
+ <       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+ <     }
+ <   }
+eth_getCode
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 8,
+   >   "method": "eth_getCode",
+   >   "params": [
+   >     "0x8ed23120276e8941dae453c414b45066630f8150",
+   >     "latest"
+   >   ]
+   > }
+ <   {
+ <     "id": 8,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x608060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680630900f01014610067578063445df0ac146100aa5780638da5cb5b146100d5578063fdacd5761461012c575b600080fd5b34801561007357600080fd5b506100a8600480360381019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610159565b005b3480156100b657600080fd5b506100bf610241565b6040518082815260200191505060405180910390f35b3480156100e157600080fd5b506100ea610247565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561013857600080fd5b506101576004803603810190808035906020019092919050505061026c565b005b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16141561023d578190508073ffffffffffffffffffffffffffffffffffffffff1663fdacd5766001546040518263ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040180828152602001915050600060405180830381600087803b15801561022457600080fd5b505af1158015610238573d6000803e3d6000fd5b505050505b5050565b60015481565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614156102c957806001819055505b505600a165627a7a72305820eb0e08476ecb80fde19b68ac8d722f581912cd284590773c7cbf18a33171af4e0029"
+ <   }
+eth_uninstallFilter
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 9,
+   >   "method": "eth_uninstallFilter",
+   >   "params": [
+   >     "0x01"
+   >   ]
+   > }
+eth_sendTransaction
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 10,
+   >   "method": "eth_sendTransaction",
+   >   "params": [
+   >     {
+   >       "from": "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+   >       "gas": "0x6691b7",
+   >       "gasPrice": "0x174876e800",
+   >       "to": "0x8ed23120276e8941dae453c414b45066630f8150",
+   >       "data": "0xfdacd5760000000000000000000000000000000000000000000000000000000000000001"
+   >     }
+   >   ]
+   > }
+ <   {
+ <     "id": 9,
+ <     "jsonrpc": "2.0",
+ <     "result": true
+ <   }
+PUSH1
+PUSH1
+MSTORE 0x80 0x40
+PUSH1
+CALLDATASIZE
+LT 0x4 0x24
+PUSH2
+JUMPI 0x0 0x62
+PUSH1
+CALLDATALOAD 0x0
+PUSH29
+SWAP1
+DIV 0x100000000000000000000000000000000000000000000000000000000 0xfdacd57600000000000000000000000000000000000000000000000000000000
+PUSH4
+AND 0xfdacd576 0xffffffff
+DUP1
+PUSH4
+EQ 0xfdacd576 0x900f010
+PUSH2
+JUMPI 0x0 0x67
+DUP1
+PUSH4
+EQ 0xfdacd576 0x445df0ac
+PUSH2
+JUMPI 0x0 0xaa
+DUP1
+PUSH4
+EQ 0xfdacd576 0x8da5cb5b
+PUSH2
+JUMPI 0x0 0xd5
+DUP1
+PUSH4
+EQ 0xfdacd576 0xfdacd576
+PUSH2
+JUMPI 0x1 0x12c
+JUMPDEST
+CALLVALUE
+DUP1
+ISZERO 0x0
+PUSH2
+JUMPI 0x1 0x138
+JUMPDEST
+POP 0x0
+PUSH2
+PUSH1
+DUP1
+CALLDATASIZE
+SUB 0x4 0x24
+DUP2
+ADD 0x20 0x4
+SWAP1
+DUP1
+DUP1
+CALLDATALOAD 0x4
+SWAP1
+PUSH1
+ADD 0x4 0x20
+SWAP1
+SWAP3
+SWAP2
+SWAP1
+POP 0x24
+POP 0x4
+POP 0x24
+PUSH2
+JUMP 0x26c
+JUMPDEST
+PUSH1
+DUP1
+SWAP1
+SLOAD 0x0
+SWAP1
+PUSH2
+EXP 0x0 0x100
+SWAP1
+DIV 0x1 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+CALLER
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+EQ 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+ISZERO 0x1
+PUSH2
+JUMPI 0x0 0x2c9
+DUP1
+PUSH1
+DUP2
+SWAP1
+SSTORE 0x1 0x1
+POP 0x1
+JUMPDEST
+POP 0x1
+JUMP 0x157
+JUMPDEST
+STOP
+
+  Transaction: 0xd53b96b3ae73db7916b977dbd7a37e6f43b184baf4c590594955e88203ad4947
+  Gas usage: 42008
+  Block Number: 2
+  Block Time: Wed May 09 2018 20:43:28 GMT+0200 (CEST)
+
+ <   {
+ <     "id": 10,
+ <     "jsonrpc": "2.0",
+ <     "result": "0xd53b96b3ae73db7916b977dbd7a37e6f43b184baf4c590594955e88203ad4947"
+ <   }
+eth_getTransactionReceipt
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 11,
+   >   "method": "eth_getTransactionReceipt",
+   >   "params": [
+   >     "0xd53b96b3ae73db7916b977dbd7a37e6f43b184baf4c590594955e88203ad4947"
+   >   ]
+   > }
+ <   {
+ <     "id": 11,
+ <     "jsonrpc": "2.0",
+ <     "result": {
+ <       "transactionHash": "0xd53b96b3ae73db7916b977dbd7a37e6f43b184baf4c590594955e88203ad4947",
+ <       "transactionIndex": "0x00",
+ <       "blockHash": "0x1261aa999deefda9f738d5c17faa3b7f8e7d46f294d02b71e78da797c824dbab",
+ <       "blockNumber": "0x02",
+ <       "gasUsed": "0xa418",
+ <       "cumulativeGasUsed": "0xa418",
+ <       "contractAddress": null,
+ <       "logs": [],
+ <       "status": "0x01",
+ <       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+ <     }
+ <   }
+eth_accounts
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 12,
+   >   "method": "eth_accounts",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 12,
+ <     "jsonrpc": "2.0",
+ <     "result": [
+ <       "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+ <       "0xc4b0e67aed7da3ecfe222478512c4ce793d361d7",
+ <       "0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5",
+ <       "0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e",
+ <       "0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7",
+ <       "0x1e1d87af5421c977a75604651ee663457c34c12b",
+ <       "0x838eab87a84dfc10f904c5cf0e0fd41edffae30f",
+ <       "0x4473beba2fe323da4cc5c75ae813229e3757fc04",
+ <       "0x2d84ea179555a5db90fc20d694844216f4f5a744",
+ <       "0x1264e056538814a3908a12025aafb39976cc7c38"
+ <     ]
+ <   }
+net_version
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 13,
+   >   "method": "net_version",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 13,
+ <     "jsonrpc": "2.0",
+ <     "result": "4567890"
+ <   }
+net_version
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 14,
+   >   "method": "net_version",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 14,
+ <     "jsonrpc": "2.0",
+ <     "result": "4567890"
+ <   }
+eth_sendTransaction
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 15,
+   >   "method": "eth_sendTransaction",
+   >   "params": [
+   >     {
+   >       "from": "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+   >       "gas": "0x6691b7",
+   >       "gasPrice": "0x174876e800",
+   >       "data": "0x608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610946806100606000396000f300608060405260043610610099576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806303cc55971461009e5780633ccfd60b146100a85780639d24e482146100bf5780639e07f92a146101165780639ede38581461016d578063a8b42f1f1461019c578063e2f0a978146101b3578063f0f324971461020a578063f973728e14610239575b600080fd5b6100a6610268565b005b3480156100b457600080fd5b506100bd6104d5565b005b3480156100cb57600080fd5b506100d46105a2565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561012257600080fd5b5061012b6105c8565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561017957600080fd5b506101826105ee565b604051808215151515815260200191505060405180910390f35b3480156101a857600080fd5b506101b1610601565b005b3480156101bf57600080fd5b506101c861077b565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561021657600080fd5b5061021f6107a0565b604051808215151515815260200191505060405180910390f35b34801561024557600080fd5b5061024e6107b3565b604051808215151515815260200191505060405180910390f35b600460009054906101000a900460ff1615801561032957506000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614806103285750600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16145b5b151561033457600080fd5b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614156103d55760001515600160149054906101000a900460ff1615151415156103ab57600080fd5b60018060146101000a81548160ff021916908315150217905550346002540160028190555061041d565b60001515600160159054906101000a900460ff1615151415156103f757600080fd5b60018060156101000a81548160ff02191690831515021790555034600354016003819055505b600160149054906101000a900460ff1680156104455750600160159054906101000a900460ff165b156104d357600260035402600254101515610489576104846000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff166107c6565b6104d2565b60028054026003541015156104c8576104c3600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff166107c6565b6104d1565b6104d061089f565b5b5b5b565b6000600460009054906101000a900460ff16801561054057503373ffffffffffffffffffffffffffffffffffffffff16600460019054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16145b151561054b57600080fd5b600554905060006005819055503373ffffffffffffffffffffffffffffffffffffffff166108fc829081150290604051600060405180830381858888f1935050505015801561059e573d6000803e3d6000fd5b5050565b600460019054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160149054906101000a900460ff1681565b600073ffffffffffffffffffffffffffffffffffffffff16600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1614151561065e57600080fd5b33600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055507fd4443f0433b17d5fcbda14745060c62f4fd645677efd560e394d49cc6b73b9e56000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff16600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019250505060405180910390a1565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600460009054906101000a900460ff1681565b600160159054906101000a900460ff1681565b6001600460006101000a81548160ff02191690831515021790555080600460016101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550600354600254016005819055507f132c17ee6430a7c27424b2711c0e3f020ae13d9d62cfb347ae343c2180654bcb81600554604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a150565b6000600160146101000a81548160ff0219169083151502179055506000600160156101000a81548160ff0219169083151502179055507f4a06b026e39d5ecf4150ef1983227e240bcd23677c8d89479f9521c4e7bed63e600254600354604051808381526020018281526020019250505060405180910390a15600a165627a7a72305820c557211851d97a3788d6a141f506aef5d0f9676e3f0d3d10118942a0632821d00029"
+   >     }
+   >   ]
+   > }
+PUSH1
+PUSH1
+MSTORE 0x80 0x40
+CALLVALUE
+DUP1
+ISZERO 0x0
+PUSH2
+JUMPI 0x1 0x10
+JUMPDEST
+POP 0x0
+CALLER
+PUSH1
+DUP1
+PUSH2
+EXP 0x0 0x100
+DUP2
+SLOAD 0x0
+DUP2
+PUSH20
+MUL 0x1 0xffffffffffffffffffffffffffffffffffffffff
+NOT 0xffffffffffffffffffffffffffffffffffffffff
+AND 0x0 0xffffffffffffffffffffffff0000000000000000000000000000000000000000
+SWAP1
+DUP4
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+MUL 0x1 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+OR 0x0 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+SWAP1
+SSTORE 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0x0
+POP 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+PUSH2
+DUP1
+PUSH2
+PUSH1
+CODECOPY 0x946 0x60 0x0
+PUSH1
+RETURN 0x946 0x0
+
+  Transaction: 0x24b6c82d7a0992ccd5d95a3e7c2f3d9140bb33eae07aac9a2b70c93eb2cabb2d
+  Contract created: 0x62dae9935302797d7666b63c1b6b3009c6fe7a23
+  Gas usage: 708985
+  Block Number: 3
+  Block Time: Wed May 09 2018 20:43:28 GMT+0200 (CEST)
+
+ <   {
+ <     "id": 15,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x24b6c82d7a0992ccd5d95a3e7c2f3d9140bb33eae07aac9a2b70c93eb2cabb2d"
+ <   }
+eth_newBlockFilter
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 16,
+   >   "method": "eth_newBlockFilter",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 16,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x02"
+ <   }
+eth_getFilterChanges
+   > [
+   >   {
+   >     "jsonrpc": "2.0",
+   >     "id": 17,
+   >     "method": "eth_getFilterChanges",
+   >     "params": [
+   >       "0x02"
+   >     ]
+   >   }
+   > ]
+ <   [
+ <     {
+ <       "id": 17,
+ <       "jsonrpc": "2.0",
+ <       "result": [
+ <         "0x1261aa999deefda9f738d5c17faa3b7f8e7d46f294d02b71e78da797c824dbab"
+ <       ]
+ <     }
+ <   ]
+eth_getTransactionReceipt
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 18,
+   >   "method": "eth_getTransactionReceipt",
+   >   "params": [
+   >     "0x24b6c82d7a0992ccd5d95a3e7c2f3d9140bb33eae07aac9a2b70c93eb2cabb2d"
+   >   ]
+   > }
+ <   {
+ <     "id": 18,
+ <     "jsonrpc": "2.0",
+ <     "result": {
+ <       "transactionHash": "0x24b6c82d7a0992ccd5d95a3e7c2f3d9140bb33eae07aac9a2b70c93eb2cabb2d",
+ <       "transactionIndex": "0x00",
+ <       "blockHash": "0x7ef63a5efaa6513dbd588154e2122947b59762a4976dc9762b2d1212ad3dd5cb",
+ <       "blockNumber": "0x03",
+ <       "gasUsed": "0x0ad179",
+ <       "cumulativeGasUsed": "0x0ad179",
+ <       "contractAddress": "0x62dae9935302797d7666b63c1b6b3009c6fe7a23",
+ <       "logs": [],
+ <       "status": "0x01",
+ <       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+ <     }
+ <   }
+eth_getCode
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 19,
+   >   "method": "eth_getCode",
+   >   "params": [
+   >     "0x62dae9935302797d7666b63c1b6b3009c6fe7a23",
+   >     "latest"
+   >   ]
+   > }
+ <   {
+ <     "id": 19,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x608060405260043610610099576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806303cc55971461009e5780633ccfd60b146100a85780639d24e482146100bf5780639e07f92a146101165780639ede38581461016d578063a8b42f1f1461019c578063e2f0a978146101b3578063f0f324971461020a578063f973728e14610239575b600080fd5b6100a6610268565b005b3480156100b457600080fd5b506100bd6104d5565b005b3480156100cb57600080fd5b506100d46105a2565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561012257600080fd5b5061012b6105c8565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561017957600080fd5b506101826105ee565b604051808215151515815260200191505060405180910390f35b3480156101a857600080fd5b506101b1610601565b005b3480156101bf57600080fd5b506101c861077b565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34801561021657600080fd5b5061021f6107a0565b604051808215151515815260200191505060405180910390f35b34801561024557600080fd5b5061024e6107b3565b604051808215151515815260200191505060405180910390f35b600460009054906101000a900460ff1615801561032957506000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614806103285750600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16145b5b151561033457600080fd5b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614156103d55760001515600160149054906101000a900460ff1615151415156103ab57600080fd5b60018060146101000a81548160ff021916908315150217905550346002540160028190555061041d565b60001515600160159054906101000a900460ff1615151415156103f757600080fd5b60018060156101000a81548160ff02191690831515021790555034600354016003819055505b600160149054906101000a900460ff1680156104455750600160159054906101000a900460ff165b156104d357600260035402600254101515610489576104846000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff166107c6565b6104d2565b60028054026003541015156104c8576104c3600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff166107c6565b6104d1565b6104d061089f565b5b5b5b565b6000600460009054906101000a900460ff16801561054057503373ffffffffffffffffffffffffffffffffffffffff16600460019054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16145b151561054b57600080fd5b600554905060006005819055503373ffffffffffffffffffffffffffffffffffffffff166108fc829081150290604051600060405180830381858888f1935050505015801561059e573d6000803e3d6000fd5b5050565b600460019054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160149054906101000a900460ff1681565b600073ffffffffffffffffffffffffffffffffffffffff16600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1614151561065e57600080fd5b33600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055507fd4443f0433b17d5fcbda14745060c62f4fd645677efd560e394d49cc6b73b9e56000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff16600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019250505060405180910390a1565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600460009054906101000a900460ff1681565b600160159054906101000a900460ff1681565b6001600460006101000a81548160ff02191690831515021790555080600460016101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550600354600254016005819055507f132c17ee6430a7c27424b2711c0e3f020ae13d9d62cfb347ae343c2180654bcb81600554604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a150565b6000600160146101000a81548160ff0219169083151502179055506000600160156101000a81548160ff0219169083151502179055507f4a06b026e39d5ecf4150ef1983227e240bcd23677c8d89479f9521c4e7bed63e600254600354604051808381526020018281526020019250505060405180910390a15600a165627a7a72305820c557211851d97a3788d6a141f506aef5d0f9676e3f0d3d10118942a0632821d00029"
+ <   }
+eth_uninstallFilter
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 20,
+   >   "method": "eth_uninstallFilter",
+   >   "params": [
+   >     "0x02"
+   >   ]
+   > }
+eth_sendTransaction
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 21,
+   >   "method": "eth_sendTransaction",
+   >   "params": [
+   >     {
+   >       "from": "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+   >       "gas": "0x6691b7",
+   >       "gasPrice": "0x174876e800",
+   >       "to": "0x8ed23120276e8941dae453c414b45066630f8150",
+   >       "data": "0xfdacd5760000000000000000000000000000000000000000000000000000000000000002"
+   >     }
+   >   ]
+   > }
+ <   {
+ <     "id": 20,
+ <     "jsonrpc": "2.0",
+ <     "result": true
+ <   }
+PUSH1
+PUSH1
+MSTORE 0x80 0x40
+PUSH1
+CALLDATASIZE
+LT 0x4 0x24
+PUSH2
+JUMPI 0x0 0x62
+PUSH1
+CALLDATALOAD 0x0
+PUSH29
+SWAP1
+DIV 0x100000000000000000000000000000000000000000000000000000000 0xfdacd57600000000000000000000000000000000000000000000000000000000
+PUSH4
+AND 0xfdacd576 0xffffffff
+DUP1
+PUSH4
+EQ 0xfdacd576 0x900f010
+PUSH2
+JUMPI 0x0 0x67
+DUP1
+PUSH4
+EQ 0xfdacd576 0x445df0ac
+PUSH2
+JUMPI 0x0 0xaa
+DUP1
+PUSH4
+EQ 0xfdacd576 0x8da5cb5b
+PUSH2
+JUMPI 0x0 0xd5
+DUP1
+PUSH4
+EQ 0xfdacd576 0xfdacd576
+PUSH2
+JUMPI 0x1 0x12c
+JUMPDEST
+CALLVALUE
+DUP1
+ISZERO 0x0
+PUSH2
+JUMPI 0x1 0x138
+JUMPDEST
+POP 0x0
+PUSH2
+PUSH1
+DUP1
+CALLDATASIZE
+SUB 0x4 0x24
+DUP2
+ADD 0x20 0x4
+SWAP1
+DUP1
+DUP1
+CALLDATALOAD 0x4
+SWAP1
+PUSH1
+ADD 0x4 0x20
+SWAP1
+SWAP3
+SWAP2
+SWAP1
+POP 0x24
+POP 0x4
+POP 0x24
+PUSH2
+JUMP 0x26c
+JUMPDEST
+PUSH1
+DUP1
+SWAP1
+SLOAD 0x0
+SWAP1
+PUSH2
+EXP 0x0 0x100
+SWAP1
+DIV 0x1 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+CALLER
+PUSH20
+AND 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xffffffffffffffffffffffffffffffffffffffff
+EQ 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+ISZERO 0x1
+PUSH2
+JUMPI 0x0 0x2c9
+DUP1
+PUSH1
+DUP2
+SWAP1
+SSTORE 0x2 0x1
+POP 0x2
+JUMPDEST
+POP 0x2
+JUMP 0x157
+JUMPDEST
+STOP
+
+  Transaction: 0x0cf8e04e91a0f8edb1be8d4fd6a3495dfb5142896614653d6fa40f890ed702cc
+  Gas usage: 27008
+  Block Number: 4
+  Block Time: Wed May 09 2018 20:43:29 GMT+0200 (CEST)
+
+ <   {
+ <     "id": 21,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x0cf8e04e91a0f8edb1be8d4fd6a3495dfb5142896614653d6fa40f890ed702cc"
+ <   }
+eth_getTransactionReceipt
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 22,
+   >   "method": "eth_getTransactionReceipt",
+   >   "params": [
+   >     "0x0cf8e04e91a0f8edb1be8d4fd6a3495dfb5142896614653d6fa40f890ed702cc"
+   >   ]
+   > }
+ <   {
+ <     "id": 22,
+ <     "jsonrpc": "2.0",
+ <     "result": {
+ <       "transactionHash": "0x0cf8e04e91a0f8edb1be8d4fd6a3495dfb5142896614653d6fa40f890ed702cc",
+ <       "transactionIndex": "0x00",
+ <       "blockHash": "0xc785c13cb440b251dcb42bf29b81a5fa5dff086e4ad8ee6d370c75d8d15f6fc4",
+ <       "blockNumber": "0x04",
+ <       "gasUsed": "0x6980",
+ <       "cumulativeGasUsed": "0x6980",
+ <       "contractAddress": null,
+ <       "logs": [],
+ <       "status": "0x01",
+ <       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+ <     }
+ <   }
+
+... ... ...
+```
+
+### Vamos a incluir un subdirectorio en el workspace `trufflewksp`del proyecto truffle para almacenar archivos JavaScript para importarlos desde `truffle console`
+
+```
+devel@vbxdeb8:~$ cd ~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp/
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ tree
+.
+├── build
+│   └── contracts
+│       ├── Migrations.json
+│       └── Wrestling.json
+├── contracts
+│   ├── Migrations.sol
+│   └── Wrestling.sol
+├── migrations
+│   ├── 1_initial_migration.js
+│   └── 2_deploy_contracts.js
+├── test
+├── truffle-config.js
+└── truffle.js
+
+5 directories, 8 files
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ mkdir -pv src/js
+mkdir: se ha creado el directorio 'src'
+mkdir: se ha creado el directorio 'src/js'
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ tree
+.
+├── build
+│   └── contracts
+│       ├── Migrations.json
+│       └── Wrestling.json
+├── contracts
+│   ├── Migrations.sol
+│   └── Wrestling.sol
+├── migrations
+│   ├── 1_initial_migration.js
+│   └── 2_deploy_contracts.js
+├── src
+│   └── js
+├── test
+├── truffle-config.js
+└── truffle.js
+
+7 directories, 8 files
+```
+
+### Como primera prueba se ha creado el script `src/js/primerasComprobaciones.js`
+
+```js
+// primerasComprobaciones.js
+module.exports = function (callback) {
+    // perform actions
+
+    var accountList = JSON.stringify(web3.eth.accounts, null, 2);
+    console.log("Cuentas:\n " + accountList);
+
+    var coinBaseAddress = JSON.stringify(web3.eth.coinbase, null, 2);
+    console.log("\nCoinbase Address:\n " + coinBaseAddress);
+
+    var gasPrice = JSON.stringify(web3.eth.gasPrice, null, 2);
+    console.log("\nGas Price:\n " + gasPrice);
+
+    console.log("\nBlock Number:");
+    web3.eth.getBlockNumber(function (error, result) {
+        if (!error) {
+            console.log(result);
+            web3.eth.getBlock(result, function (error, result) {
+                if (!error)
+                    console.log("\nBlockInfo:\n" + JSON.stringify(result));
+                else
+                    console.error(error);
+            })
+        } else {
+            console.error(error);
+        }
+    })
+
+    return 0;
+}
+```
+
+### Vamos a realizar unas primeras comprobaciones del resultado del despliegue del contrato usando `truffle console` e invocando el script `src/js/primerasComprobaciones.js` desde dicha consola.
+
+```sh
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ truffle console --network localganache
+truffle(localganache)> exec "./src/js/primerasComprobaciones.js"
+Using network 'localganache'.
+
+Cuentas:
+ [
+  "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+  "0xc4b0e67aed7da3ecfe222478512c4ce793d361d7",
+  "0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5",
+  "0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e",
+  "0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7",
+  "0x1e1d87af5421c977a75604651ee663457c34c12b",
+  "0x838eab87a84dfc10f904c5cf0e0fd41edffae30f",
+  "0x4473beba2fe323da4cc5c75ae813229e3757fc04",
+  "0x2d84ea179555a5db90fc20d694844216f4f5a744",
+  "0x1264e056538814a3908a12025aafb39976cc7c38"
+]
+
+Coinbase Address:
+ "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba"
+
+Gas Price:
+ "100000000000"
+
+Block Number:
+4
+
+BlockInfo:
+{"number":4,"hash":"0xc785c13cb440b251dcb42bf29b81a5fa5dff086e4ad8ee6d370c75d8d15f6fc4","parentHash":"0x7ef63a5efaa6513dbd588154e2122947b59762a4976dc9762b2d1212ad3dd5cb","mixHash":"0x1010101010101010101010101010101010101010101010101010101010101010","nonce":"0x0000000000000000","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","stateRoot":"0x4a848c964830a1f608da2e922bdd88a935e549a38b38394e2b8ad5c9b90f5aa9","receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","miner":"0x0000000000000000000000000000000000000000","difficulty":"0","totalDifficulty":"0","extraData":"0x00","size":1000,"gasLimit":6721975,"gasUsed":27008,"timestamp":1525891409,"transactions":["0x0cf8e04e91a0f8edb1be8d4fd6a3495dfb5142896614653d6fa40f890ed702cc"],"uncles":[]}
+
+undefined
+truffle(localganache)> .exit
+```
+
+#### En el log de `ganache-cli` podemos observar:
+
+'''
+... ... ... 
+eth_accounts
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 1,
+   >   "method": "eth_accounts",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 1,
+ <     "jsonrpc": "2.0",
+ <     "result": [
+ <       "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+ <       "0xc4b0e67aed7da3ecfe222478512c4ce793d361d7",
+ <       "0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5",
+ <       "0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e",
+ <       "0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7",
+ <       "0x1e1d87af5421c977a75604651ee663457c34c12b",
+ <       "0x838eab87a84dfc10f904c5cf0e0fd41edffae30f",
+ <       "0x4473beba2fe323da4cc5c75ae813229e3757fc04",
+ <       "0x2d84ea179555a5db90fc20d694844216f4f5a744",
+ <       "0x1264e056538814a3908a12025aafb39976cc7c38"
+ <     ]
+ <   }
+eth_coinbase
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 2,
+   >   "method": "eth_coinbase",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 2,
+ <     "jsonrpc": "2.0",
+ <     "result": "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba"
+ <   }
+eth_gasPrice
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 3,
+   >   "method": "eth_gasPrice",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 3,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x174876e800"
+ <   }
+eth_blockNumber
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 4,
+   >   "method": "eth_blockNumber",
+   >   "params": []
+   > }
+ <   {
+ <     "id": 4,
+ <     "jsonrpc": "2.0",
+ <     "result": "0x04"
+ <   }
+eth_getBlockByNumber
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 5,
+   >   "method": "eth_getBlockByNumber",
+   >   "params": [
+   >     "0x4",
+   >     false
+   >   ]
+   > }
+ <   {
+ <     "id": 5,
+ <     "jsonrpc": "2.0",
+ <     "result": {
+ <       "number": "0x4",
+ <       "hash": "0xc785c13cb440b251dcb42bf29b81a5fa5dff086e4ad8ee6d370c75d8d15f6fc4",
+ <       "parentHash": "0x7ef63a5efaa6513dbd588154e2122947b59762a4976dc9762b2d1212ad3dd5cb",
+ <       "mixHash": "0x1010101010101010101010101010101010101010101010101010101010101010",
+ <       "nonce": "0x0000000000000000",
+ <       "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+ <       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+ <       "transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+ <       "stateRoot": "0x4a848c964830a1f608da2e922bdd88a935e549a38b38394e2b8ad5c9b90f5aa9",
+ <       "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+ <       "miner": "0x0000000000000000000000000000000000000000",
+ <       "difficulty": "0x0",
+ <       "totalDifficulty": "0x0",
+ <       "extraData": "0x00",
+ <       "size": "0x03e8",
+ <       "gasLimit": "0x6691b7",
+ <       "gasUsed": "0x6980",
+ <       "timestamp": "0x5af34151",
+ <       "transactions": [
+ <         "0x0cf8e04e91a0f8edb1be8d4fd6a3495dfb5142896614653d6fa40f890ed702cc"
+ <       ],
+ <       "uncles": []
+ <     }
+ <   }
+... ... ... 
+```

@@ -6,7 +6,7 @@ module.exports = {
     localganache: {
       host: "127.0.0.1",
       port: 8545,
-      network_id: "*", // Match any network id
+      network_id: "4567890", 
       // optional config values:
       // gas (Gas limit used for deploys. Default is 4712388)
       // gasPrice (Gas price used for deploys. Default is 100000000000 (100 Shannon).)
