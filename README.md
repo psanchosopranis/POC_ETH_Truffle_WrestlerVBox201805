@@ -6,6 +6,8 @@ Contiene la bitácora de progreso de ejecución del tutorial, y de hecho contien
 
 ## Bitácora y notas
 
+## Paso 1. Instalación y configuración inicial
+
 ### Versión de linux utilizada en este ejemplo
 ```sh
 # cat /etc/issue
@@ -369,7 +371,7 @@ Interesa conseguir un reinicio `controlado` de `ganache-cli` con las mismas cuen
 
 Para ello se han dispuesto dos scripts que consiguen el mismo objetivo pero sirven para mostrar diferentes formas de arrancar `ganache-cli`
 
-#### 1) `scripts/ganache-cli-restart-from-mnemonic.sh`
+#### Script 1) `scripts/ganache-cli-restart-from-mnemonic.sh`
 
 ```sh
 #!/bin/bash
@@ -442,7 +444,7 @@ scripts/ganache-cli-restart-from-mnemonic.sh
 ^C+ set +x
 ```
 
-#### 2) `scripts/ganache-cli-restart-from-explicit-accounts.sh`
+#### Script 2) `scripts/ganache-cli-restart-from-explicit-accounts.sh`
 
 ```sh
 #!/bin/bash
@@ -518,8 +520,9 @@ scripts/ganache-cli-restart-from-explicit-accounts.sh
 ^C+ set +x
 
 ```
+___________________________________________________________________________
 
-### Inicializando el proyecto `Truffle`
+## Paso 2. Inicialización del proyecto `Truffle`
 
 >Nota: Se requiere realizar la inicialización sobre un directorio vacío
 
@@ -759,10 +762,11 @@ El `workspace` de trabajo de Truffle quedará así tras los cambios realizados:
 
 ![truffle workspace status](images/IMG01.png "truffle workspace status")
 
+___________________________________________________________________________
 
-## Probando el código
+## Paso 3. Compilación del código de los Contratos
 
-### 1) Arrancar ganache en un terminal separado (o como proceso de fondo)
+### Arrancar ganache en un terminal separado (o como proceso de fondo)
 
 ```
 devel@vbxdeb8:~$ cd POC/POC_ETH_Truffle_WrestlerVBox201805/scripts/
@@ -870,7 +874,7 @@ Transfer-Encoding: chunked
 {"id":83,"jsonrpc":"2.0","result":"0x00"}
 ```
 
-### 2) Utilizar truffle para compilar el código Solidity de ambos contratos `Migrations.sol` y `Wrestling.sol`
+### Utilizar truffle para compilar el código Solidity de ambos contratos `Migrations.sol` y `Wrestling.sol`
 
 ```sh
 devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805$ cd trufflewksp/
@@ -7099,7 +7103,11 @@ Si examinamos el resultado de la compilación del contrato `Wrestling.sol` que s
 }
 ```
 
-### 3) Utilizar truffle para realizar el `Migrate` (Despliegue)  de ambos contratos `Migrations.sol` y `Wrestling.sol`
+___________________________________________________________________________
+
+## Paso 4. Migración (Despliegue) de los contratos en el nodo (Ganache en este ejemplo)
+
+### Utilizar truffle para realizar el `Migrate` (Despliegue)  de ambos contratos `Migrations.sol` y `Wrestling.sol`
 
 
 ```
@@ -7304,8 +7312,12 @@ Transfer-Encoding: chunked
   1. En la transacción se está usando `"gas": "0x6691b7"` --> `6721975` en lugar de `4712388` 
   2. En la transacción se utiliza `"gasPrice": "0x174876e800"` --> `100000000000` que sí coincide con el valor reseñado en la documentación.
   3. Por otra parte en el script de arranque de `ganache-cli` se ha usado `--gasPrice 20000000000` y `--gasLimit 90000`. El `--gasLimit 90000` es manifiestamente escaso ==> por tanto *vamos a hacer una nueva prueba modificando este valor en los scripts de arranque de ganache-cli*
- 
-### 4) Utilizar truffle para realizar el `Migrate` (Despliegue)  de ambos contratos `Migrations.sol` y `Wrestling.sol` SEGUNDO INTENTO
+
+___________________________________________________________________________
+
+## Paso 5. SEGUNDO INTENTO de Migración (Despliegue) de los contratos en el nodo (Ganache en este ejemplo) 
+
+### Utilizar truffle para realizar el `Migrate` (Despliegue)  de ambos contratos `Migrations.sol` y `Wrestling.sol` 
 
 #### Ajuste de parámetros 
 
@@ -8384,3 +8396,11 @@ eth_getBlockByNumber
  <   }
 ... ... ... 
 ```
+
+___________________________________________________________________________
+
+## Paso 6. REANUDACION DEL TUTORIAL comenzando con una nueva Migración (Despliegue) de los contratos en el nodo (Ganache en este ejemplo)
+
+> Esto se debe a que por razones de tiempo hubo de interrumpir en el punto anterior el hilo del tutorial. Al estar utilizando `ganache-cli` como nodo ethereum de pruebas, cuando éste se detiene (al apagar la máquina virtual) y se reanuda de nuevo, se vuelve a comenzar con una cadena de bloques **limpia**, por tanto se pierden **todas las transacciones** anteriores así cómo los **contratos desplegados**.
+
+ 
