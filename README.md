@@ -8295,7 +8295,7 @@ truffle(localganache)> .exit
 
 #### En el log de `ganache-cli` podemos observar:
 
-'''
+```js
 ... ... ... 
 eth_accounts
    > {
@@ -8403,4 +8403,3 @@ ___________________________________________________________________________
 
 > Esto se debe a que por razones de tiempo hubo de interrumpir en el punto anterior el hilo del tutorial. Al estar utilizando `ganache-cli` como nodo ethereum de pruebas, cuando éste se detiene (al apagar la máquina virtual) y se reanuda de nuevo, se vuelve a comenzar con una cadena de bloques **limpia**, por tanto se pierden **todas las transacciones** anteriores así cómo los **contratos desplegados**.
 
- 
