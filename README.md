@@ -8403,3 +8403,156 @@ ___________________________________________________________________________
 
 > Esto se debe a que por razones de tiempo hubo de interrumpir en el punto anterior el hilo del tutorial. Al estar utilizando `ganache-cli` como nodo ethereum de pruebas, cuando éste se detiene (al apagar la máquina virtual) y se reanuda de nuevo, se vuelve a comenzar con una cadena de bloques **limpia**, por tanto se pierden **todas las transacciones** anteriores así cómo los **contratos desplegados**.
 
+### Re-arranque de `ganache-cli` en consola independiente
+
+```sh
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/scripts$ ./ganache-cli-restart-from-mnemonic.sh 
++ ganache-cli --deterministic --mnemonic 'grunt turn amount mule siren favorite tenant bronze parent fit grit conduct' --port 8545 --hostname localhost --networkId 4567890 --gasPrice 100000000000 --gasLimit 6721975 --defaultBalanceEther 200 --debug --verbose
+Ganache CLI v6.1.0 (ganache-core: 2.1.0)
+
+Available Accounts
+==================
+(0) 0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba
+(1) 0xc4b0e67aed7da3ecfe222478512c4ce793d361d7
+(2) 0xcc870bd8b5dd3edf902fea16d206d45e2d34e1d5
+(3) 0x99a0eec6ed3e7f66ee9ff1d547007e3ab96a126e
+(4) 0x67a285945c73bc2c437b3fcb2c0fb09486c7fae7
+(5) 0x1e1d87af5421c977a75604651ee663457c34c12b
+(6) 0x838eab87a84dfc10f904c5cf0e0fd41edffae30f
+(7) 0x4473beba2fe323da4cc5c75ae813229e3757fc04
+(8) 0x2d84ea179555a5db90fc20d694844216f4f5a744
+(9) 0x1264e056538814a3908a12025aafb39976cc7c38
+
+Private Keys
+==================
+(0) b7710c30d244ae266c870df61da808e73eeb7ddc1fb876a46970578aea1213ae
+(1) e6e1dcc6ac2d7031801b7ab6ecd5a728e3d299bf36a10355aa5e4ad4d91c0e93
+(2) 31c30ab4eb11e1c2cc11efc21968c09adb7a48e195373b13888a83e47989d8b5
+(3) da383b821f2f782ef796564125ee034707a1a31e86e6a5b1e6f85373aabf2dc9
+(4) 2645109b811a4d3b6a44af603401ab52f51bb9d33ba1a21ce1d748be0b84ffe1
+(5) 1c531e3c1d12d81bcca38c5e929dcdb127cb5fe133c8dc4a472e3776653749be
+(6) c97ffdb76c97ac9dc1922f388f8f6c50961e1594f0d6ce16aaa91d0351a4f27b
+(7) 3f987fad68af00f0c45288f3dbe50e8e7fb6f541191b54c617ad46acc4964c92
+(8) 5f8f265645d54160fd8bc06db8f80f26a24d9e1256fe73e08405b1bc7e035adf
+(9) feccbcceec04c903e9fd93390219425b61daf6dbe4bf24fdb5677c37f462f96c
+
+HD Wallet
+==================
+Mnemonic:      grunt turn amount mule siren favorite tenant bronze parent fit grit conduct
+Base HD Path:  m/44'/60'/0'/0/{account_index}
+
+Gas Price
+==================
+100000000000
+
+Gas Limit
+==================
+6721975
+
+Listening on localhost:8545
+```
+
+### ADVERTENCIA IMPORTANTE: NECESIDAD DE REPETIR Y ***REINICIALIZAR*** LA COMPILACION
+
+Al rearrancar de nuevo `ganache-cli` se han perdido **Todas las transacciones** así cómo **los contratos desplegados**. Esto no ocurre en escenarios reales con nodos de producción de `Ethereum` o de test de las redes `Rinkeby`o `Ropsten`, o en general en nodos de una red privada que no se haya reinicializado desde un `genesis-block`
+
+Durante el proceso de `migrate` el framework Truffle registra al final de los archivos `.json` contenidos en la carpeta `build/contracts` el resultado del proceso de despliegue conservando la `dirección` del contrato y el `network-id` de la red donde han sido desplegados:
+
+Así por ejemplo:
+
+* Al final de `build/contracts/Migrations.json`
+```js
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.23+commit.124ca40d.Emscripten.clang"
+  },
+    "networks": {
+    "4567890": {
+      "events": {},
+      "links": {},
+      "address": "0x8ed23120276e8941dae453c414b45066630f8150",
+      "transactionHash": "0x455a68768f78532a1f9b071c4c1f420a8c4a7585930d7f3bad2b4d786fb402c5"
+    }
+  },
+  "schemaVersion": "2.0.0",
+  "updatedAt": "2018-05-09T18:43:29.274Z"
+```
+
+
+* Al final de `build/contracts/Wrestling.json`     
+```js
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.23+commit.124ca40d.Emscripten.clang"
+  },
+  "networks": {
+    "4567890": {
+      "events": {},
+      "links": {},
+      "address": "0x62dae9935302797d7666b63c1b6b3009c6fe7a23",
+      "transactionHash": "0x24b6c82d7a0992ccd5d95a3e7c2f3d9140bb33eae07aac9a2b70c93eb2cabb2d"
+    }
+  },
+  "schemaVersion": "2.0.0",
+  "updatedAt": "2018-05-09T18:43:29.250Z"
+```
+
+Por esta razón si se repite el proceso de `migrate` (despliegue) de los contratos de nuevo con el `nodo ganache-cli` re-iniciado de nuevo, ésto es lo que sucede:
+
+```sh
+devel@vbxdeb8:~$ cd ~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp
+devel@vbxdeb8:~/POC/POC_ETH_Truffle_WrestlerVBox201805/trufflewksp$ truffle migrate --network localganache
+Using network 'localganache'.
+
+Error: Attempting to run transaction which calls a contract function, but recipient address 0x8ed23120276e8941dae453c414b45066630f8150 is not a contract address
+    at Object.InvalidResponse (/usr/lib/node_modules/truffle/build/webpack:/~/web3/lib/web3/errors.js:38:1)
+    at /usr/lib/node_modules/truffle/build/webpack:/~/web3/lib/web3/requestmanager.js:86:1
+    at /usr/lib/node_modules/truffle/build/webpack:/~/truffle-provider/wrapper.js:134:1
+    at XMLHttpRequest.request.onreadystatechange (/usr/lib/node_modules/truffle/build/webpack:/~/web3/lib/web3/httpprovider.js:128:1)
+    at XMLHttpRequestEventTarget.dispatchEvent (/usr/lib/node_modules/truffle/build/webpack:/~/xhr2/lib/xhr2.js:64:1)
+    at XMLHttpRequest._setReadyState (/usr/lib/node_modules/truffle/build/webpack:/~/xhr2/lib/xhr2.js:354:1)
+    at XMLHttpRequest._onHttpResponseEnd (/usr/lib/node_modules/truffle/build/webpack:/~/xhr2/lib/xhr2.js:509:1)
+    at IncomingMessage.<anonymous> (/usr/lib/node_modules/truffle/build/webpack:/~/xhr2/lib/xhr2.js:469:1)
+    at emitNone (events.js:91:20)
+    at IncomingMessage.emit (events.js:185:7)
+    at endReadableNT (_stream_readable.js:978:12)
+    at _combinedTickCallback (internal/process/next_tick.js:80:11)
+    at process._tickCallback (internal/process/next_tick.js:104:9)
+```
+
+Obsérvese que Truffle controla a través del contrato `Migrations.sol` los sucesivos procesos de despliegue, intentando transaccionar primero con dicho contrato como puede verse en la consola de `ganache-cli`:
+
+```js
+eth_call
+   > {
+   >   "jsonrpc": "2.0",
+   >   "id": 1,
+   >   "method": "eth_call",
+   >   "params": [
+   >     {
+   >       "from": "0xeb4a8de3c6c4c0b4dea506882f80b59b57c874ba",
+   >       "gas": "0x6691b7",
+   >       "gasPrice": "0x174876e800",
+   >       "to": "0x8ed23120276e8941dae453c414b45066630f8150",
+   >       "data": "0x445df0ac"
+   >     },
+   >     "latest"
+   >   ]
+   > }
+ <   {
+ <     "id": 1,
+ <     "jsonrpc": "2.0",
+ <     "error": {
+ <       "message": "Attempting to run transaction which calls a contract function, but recipient address 0x8ed23120276e8941dae453c414b45066630f8150 is not a contract address",
+ <       "code": -32000,
+ <       "data": {
+ <         "stack": "n: Attempting to run transaction which calls a contract function, but recipient address 0x8ed23120276e8941dae453c414b45066630f8150 is not a contract address\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4080983\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4072923\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:542986\n    at c.getCode (/usr/lib/node_modules/ganache-cli/build/cli.node.js:2:120503)\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:542936\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4050262\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4053941\n    at Object.return (/usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4053600)\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4051925\n    at e (/usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4053889)\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4053874\n    at /usr/lib/node_modules/ganache-cli/build/cli.node.js:2:4051064\n    at _combinedTickCallback (internal/process/next_tick.js:73:7)\n    at process._tickCallback (internal/process/next_tick.js:104:9)",
+ <         "name": "n"
+ <       }
+ <     }
+ <   }
+```
+
+La dirección de dicho contrato `0x8ed23120276e8941dae453c414b45066630f8150` es precisamente la que almacena en `build\contracts\Migration.json`, fruto de un depliegue `migrate` anterior. El problema es que dicha dirección de contrato **NO existe al haber reiniciado ganache-cli**
+
+ 
